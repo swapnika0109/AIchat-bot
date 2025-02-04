@@ -1,0 +1,47 @@
+version: "3.1"
+
+intents:
+  - greet
+  - goodbye
+  - technical_support
+  - product_inquiry
+
+entities:
+  - product
+
+slots:
+  product:
+    type: text
+    mappings:
+    - type: from_entity
+      entity: product
+
+responses:
+  utter_greet:
+    - text: "Hello! How can I help you today?"
+  
+  utter_goodbye:
+    - text: "Goodbye! Have a great day!"
+
+actions:
+  - action_technical_support
+  - action_product_info
+
+stories:
+- story: technical support path
+  steps:
+  - intent: greet
+  - action: utter_greet
+  - intent: technical_support
+  - action: action_technical_support
+  - intent: goodbye
+  - action: utter_goodbye
+
+- story: product inquiry path
+  steps:
+  - intent: greet
+  - action: utter_greet
+  - intent: product_inquiry
+  - action: action_product_info
+  - intent: goodbye
+  - action: utter_goodbye 

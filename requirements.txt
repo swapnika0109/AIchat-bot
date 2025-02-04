@@ -1,0 +1,14 @@
+# Core dependencies
+spacy==3.4.4
+pydantic==1.10.2
+textblob==0.17.1
+python-dotenv==1.0.0
+rasa==3.5.14
+
+# Database
+psycopg2-binary==2.9.9
+pymongo==3.10.1
+
+# Visualization
+plotly==5.13.0
+dash==2.8.0 
