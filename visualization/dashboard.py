@@ -1,49 +1,50 @@
-import plotly.express as px
-import plotly.graph_objects as go
-import dash
-from dash import dcc, html
-from dash.dependencies import Input, Output
-import pandas as pd
+import streamlit as st
+import asyncio
 
 class Dashboard:
     def __init__(self):
-        self.app = dash.Dash(__name__)
-        self.setup_layout()
+        self.rasa_agent = None
+        self.setup_streamlit()
 
-    def setup_layout(self):
-        """Set up dashboard layout"""
-        self.app.layout = html.Div([
-            html.H1("Customer Support Analytics"),
-            
-            dcc.Tabs([
-                dcc.Tab(label='Conversation Overview', children=[
-                    dcc.Graph(id='daily-conversations'),
-                    dcc.Graph(id='topic-distribution')
-                ]),
-                
-                dcc.Tab(label='User Segments', children=[
-                    dcc.Graph(id='user-segments'),
-                    dcc.Graph(id='segment-characteristics')
-                ]),
-                
-                dcc.Tab(label='Performance Metrics', children=[
-                    dcc.Graph(id='response-times'),
-                    dcc.Graph(id='satisfaction-scores')
-                ])
-            ])
-        ])
+    def setup_streamlit(self):
+        st.title("Rasa Chatbot")
+        # Initialize session state for chat history if it doesn't exist
+        if 'messages' not in st.session_state:
+            st.session_state.messages = []
 
-    def update_conversation_metrics(self, data: pd.DataFrame):
-        """Update conversation metrics"""
-        # Create daily conversation trend
-        daily_trend = px.line(
-            data.groupby('date')['conversation_id'].count().reset_index(),
-            x='date',
-            y='conversation_id',
-            title='Daily Conversations'
-        )
-        return daily_trend
+    def set_rasa_agent(self, agent):
+        self.rasa_agent = agent
 
-    def run_server(self, debug=True):
-        """Run the dashboard server"""
-        self.app.run_server(debug=debug) 
+    async def get_bot_response(self, user_message):
+        try:
+            if self.rasa_agent:
+                response = await self.rasa_agent.handle_text(user_message)
+                if response and len(response) > 0:
+                    return response[0]['text']
+                return "I'm not sure how to respond to that."
+            return "Bot is not initialized"
+        except Exception as e:
+            st.error(f"Error getting response: {str(e)}")
+            return "Error processing your request"
+
+    def run_server(self, debug=False, port=8501):
+        # Display chat messages from history
+        for message in st.session_state.messages:
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
+
+        # Accept user input
+        if prompt := st.chat_input("What's your message?"):
+            # Add user message to chat history
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            with st.chat_message("user"):
+                st.markdown(prompt)
+
+            # Get bot response
+            with st.chat_message("assistant"):
+                with st.spinner("Thinking..."):
+                    response = asyncio.run(self.get_bot_response(prompt))
+                    st.markdown(response)
+                    st.session_state.messages.append({"role": "assistant", "content": response})
+
+    # ... rest of your dashboard code ...
